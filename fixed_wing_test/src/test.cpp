@@ -58,9 +58,7 @@ int main(int argc, char **argv)
     mavros_msgs::SetMode mode_change;
     offboard_flag = true;
     ros::Rate rate(20.0);
-    float point[3][3]={100,0,40,
-                        340,50,30
-                        500,-80,50};
+    float point[3][3]={100,0,40,340,50,30,500,-80,50};
     int index=0;
     while(ros::ok() && !current_state.connected)
     {
