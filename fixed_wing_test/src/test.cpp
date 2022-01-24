@@ -5,9 +5,22 @@
 #include <mavros_msgs/State.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <cmath> 
+#include <std_msgs/Int32.h>
+#include <iostream>
+using namespace std;
+
 mavros_msgs::State current_state;
 float cur_position[3];
-
+int next_fly_point =0;
+void flag_change(const std_msgs::Int32::ConstPtr& msg)
+{
+    
+    
+    next_fly_point = msg->data;
+        //ROS_INFO(next_fly_point);
+    //cout << "1: "<<next_fly_point <<endl;
+    
+}
 void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
 }
@@ -45,11 +58,12 @@ geometry_msgs::PoseStamped set_fly_position(float x, float y, float z)
 int main(int argc, char **argv)
 {
     bool offboard_flag;
-    ros::init(argc, argv, "badguys");
+    ros::init(argc, argv, "test_node");
     ros::NodeHandle nh;
-    ros::ServiceClient setmode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
     ros::Publisher send_position = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local",10);
+    ros::ServiceClient setmode_client = nh.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
     ros::ServiceClient arm_client = nh.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming");
+    ros::Subscriber control_pos = nh.subscribe<std_msgs::Int32>("/plane/fly_next_point",10, flag_change);
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
     ros::Subscriber position_subs = nh.subscribe<geometry_msgs::PoseStamped>("/mavros/local_position/pose",10, sub_position); 
     mavros_msgs::CommandBool flag;
@@ -95,13 +109,18 @@ int main(int argc, char **argv)
         }
         
         send_position.publish(point_sent);
-        if(sqrt(pow(cur_position[0]-point[index][0],2) + pow(cur_position[1]-point[index][1],2) + pow(cur_position[2]-point[index][2],2)) < 21.21 && index < 2)
+        if(sqrt(pow(cur_position[0]-point[index][0],2) + pow(cur_position[1]-point[index][1],2) + pow(cur_position[2]-point[index][2],2)) < 21.21 && index < 2 && next_fly_point ==1 )
         {
             index ++; 
             ROS_INFO("INDEX++++");
+            next_fly_point = 0;
         }
         ros::spinOnce();
         rate.sleep();
     }
 
 }
+/*
+token
+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
+*/
